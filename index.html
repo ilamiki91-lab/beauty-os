@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beauty.OS - Gestione Avanzata</title>
+    <style>
+        :root {
+            --primary: #2c3e50; --accent: #d4af37; --bg: #f4f6f8; --surface: #ffffff;
+            --text: #2c3e50; --muted: #7f8c8d; --border: #e2e8f0; 
+            --danger: #e74c3c; --warning: #f39c12; --success: #27ae60; --info: #2980b9;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        
+        .sidebar { width: 270px; background: var(--primary); padding: 2rem 1rem; color: white; display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; overflow-y: auto; }
+        .brand { font-size: 2rem; font-weight: 800; color: white; text-align: center; margin-bottom: 2rem; letter-spacing: 1px;}
+        .brand span { color: var(--accent); }
+        .nav-btn { background: transparent; color: #cbd5e1; border: none; padding: 1rem; text-align: left; cursor: pointer; border-radius: 6px; font-weight: 600; transition: 0.2s; font-size: 0.95rem; width: 100%; }
+        .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid var(--accent); }
+        
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem; }
+        .card { background: var(--surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 1.5rem;}
+        .card h2 { font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; color: var(--primary); }
+        
+        .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .form-group { flex: 1; }
+        label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        input, select { width: 100%; padding: 0.7rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 0.95rem; }
+        input:focus, select:focus { outline: none; border-color: var(--info); background: white;}
+        
+        .search-bar { padding: 0.8rem 1rem; border: 2px solid var(--accent); border-radius: 6px; background: white; font-size: 1rem; margin-bottom: 1rem; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; }
+        .search-bar:focus { border-color: var(--info); box-shadow: 0 2px 8px rgba(41,128,185,0.2); }
+
+        button.btn { background: var(--primary); color: white; border: none; padding: 0.8rem; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        button.btn:hover { background: #1a252f; }
+        button.btn-accent { background: var(--accent); color: white; }
+        button.btn-accent:hover { background: #b8962e; }
+        button.btn-danger { background: var(--danger); color: white; }
+        button.btn-edit { background: var(--info); color: white; }
+        button.btn-success { background: var(--success); color: white; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--bg); color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; }
+        .btn-sm { background: transparent; border: 1px solid var(--border); padding: 0.4rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 0.3rem; font-weight: 600;}
+        .btn-sm:hover { background: var(--bg); border-color: var(--primary); color: var(--primary); }
+        .btn-sm-danger:hover { background: #fadbd8; border-color: var(--danger); color: var(--danger); }
+        
+        .fefo-alert { font-size: 0.8rem; color: var(--warning); font-weight: bold; display: block; margin-top: 0.3rem; }
+        .fefo-urgent { color: var(--danger); }
+        
+        .stat-box { padding: 1.5rem; border-radius: 8px; text-align: center; border: 1px solid var(--border); background: var(--surface); }
+        .stat-box h3 { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 700;}
+        .stat-box .value { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+        .stat-box .sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+        .text-success { color: var(--success) !important; }
+        .text-accent { color: var(--accent) !important; }
+        .badge { padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+        .bg-carico { background: #e8f5e9; color: var(--success); }
+        .bg-sposta { background: #fff3e0; color: #e67e22; }
+        .bg-usa { background: #e3f2fd; color: var(--info); }
+        .bg-vendi { background: #fce4ec; color: #c2185b; }
+        .famiglia-tag { background: #f0e6ff; color: #7c3aed; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+
+        /* Barcode Scanner */
+        .search-with-scan { position: relative; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+        .search-with-scan .search-bar { margin-bottom: 0; flex: 1; }
+        .btn-scan { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 0.75rem 1rem; cursor: pointer; font-size: 1.2rem; flex-shrink: 0; white-space: nowrap; font-weight: bold; transition: 0.2s; }
+        .btn-scan:hover { background: #b8962e; }
+        .btn-scan:active { transform: scale(0.95); }
+
+        /* Inline barcode in form */
+        .barcode-field-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+        .barcode-field-row input { flex: 1; }
+        .barcode-field-row .btn-scan { padding: 0.65rem 1rem; font-size: 1rem; border-radius: 6px; height: 42px; }
+
+        /* Modal Scanner */
+        #scanner-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+        #scanner-modal.open { display: flex; }
+        #scanner-video { width: 100%; max-width: 480px; border-radius: 12px; border: 3px solid var(--accent); }
+        .scanner-overlay { position: relative; width: 100%; max-width: 480px; }
+        .scanner-line { position: absolute; top: 50%; left: 10%; width: 80%; height: 3px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 12px var(--accent); animation: scan-anim 1.5s ease-in-out infinite; }
+        @keyframes scan-anim { 0%,100% { top: 30%; } 50% { top: 70%; } }
+        #scanner-status { color: white; margin-top: 1rem; font-size: 1rem; text-align: center; padding: 0 1rem; }
+        #btn-chiudi-scanner { margin-top: 1.5rem; background: var(--danger); color: white; border: none; padding: 0.8rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        #scanner-result-toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--success); color: white; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: bold; font-size: 1rem; z-index: 10000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+        /* Ordini - checkbox + stampa */
+        .ordini-toolbar { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; padding: 1rem; background: var(--bg); border-radius: 8px; }
+        .ordini-toolbar select { width: auto; min-width: 180px; }
+        .ordini-toolbar button { width: auto; padding: 0.6rem 1.2rem; }
+        .checkbox-col { width: 36px; text-align: center; }
+        input[type="checkbox"] { width: auto; cursor: pointer; transform: scale(1.3); accent-color: var(--accent); }
+
+        /* Valori inventario box colorati */
+        .stat-box.accent-border { border-top: 4px solid var(--accent); }
+        .stat-box.success-border { border-top: 4px solid var(--success); }
+        .stat-box.info-border { border-top: 4px solid var(--info); }
+        .stat-box.warning-border { border-top: 4px solid var(--warning); }
+
+        /* Print styles */
+        @media print {
+            body { display: block; height: auto; overflow: auto; }
+            .sidebar, .ordini-toolbar, .no-print { display: none !important; }
+            .main-content { padding: 0; }
+            .tab-content { display: none !important; }
+            #print-area { display: block !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        #print-area { display: none; }
+        #print-area h1 { font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--primary); }
+        #print-area .print-meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+        #print-area .print-categoria { font-size: 1rem; font-weight: 700; color: var(--primary); background: var(--bg); padding: 0.5rem 1rem; margin: 1rem 0 0.5rem; border-left: 4px solid var(--accent); }
+        #print-area table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        #print-area th, #print-area td { padding: 0.5rem 0.8rem; border: 1px solid #ccc; font-size: 0.85rem; }
+        #print-area th { background: #eee; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">Beauty<span>.OS</span></div>
+        <button class="nav-btn" onclick="switchTab('anagrafica', this)">📇 1. Anagrafica</button>
+        <button class="nav-btn" onclick="switchTab('carico', this)">📥 2. Carico (Bolla)</button>
+        <button class="nav-btn active" onclick="switchTab('magazzino', this)">📦 3. Magazzino</button>
+        <button class="nav-btn" onclick="switchTab('inventario', this)">💰 Valore Inventario</button>
+        <button class="nav-btn" onclick="switchTab('vendite', this)">📈 Vendite & Finanza</button>
+        <button class="nav-btn" onclick="switchTab('storico', this)">🕒 Storico</button>
+        <button class="nav-btn" onclick="switchTab('ordini', this)">🛒 Alert Ordini</button>
+        <div style="flex-grow: 1;"></div>
+        <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="switchTab('impostazioni', this)">⚙️ Impostazioni</button>
+    </aside>
+
+    <main class="main-content">
+        
+        <!-- ===================== ANAGRAFICA ===================== -->
+        <div id="tab-anagrafica" class="tab-content">
+            <div class="card" style="max-width: 860px; margin-bottom: 2rem;">
+                <h2 id="titolo-form-anagrafica">✨ Creazione Nuovo Articolo</h2>
+                <form id="form-crea">
+                    <input type="hidden" id="edit-id" value="">
+                    <div class="form-row">
+                        <div class="form-group"><label>Nome Prodotto</label><input type="text" id="c-nome" required></div>
+                        <div class="form-group">
+                            <label>Famiglia / Categoria</label>
+                            <div style="display:flex; gap:0.5rem;">
+                                <input type="text" id="c-famiglia" placeholder="Es: Viso, Capelli, Corpo..." list="famiglie-list" autocomplete="off">
+                                <datalist id="famiglie-list"></datalist>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Destinazione</label>
+                            <select id="c-uso">
+                                <option value="uso">Solo Uso Cabina</option>
+                                <option value="vendita">Solo Vendita Clienti</option>
+                                <option value="entrambi">Cabina + Vendita</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Gestione Scadenze (FEFO)?</label>
+                            <select id="c-scadenza">
+                                <option value="si">Sì</option><option value="no">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Prezzo al Pubblico (€)</label><input type="number" step="0.01" id="c-prezzo" value="0.00"></div>
+                        <div class="form-group"><label>Allarme Scorta Mag</label><input type="number" id="c-min-mag" value="3"></div>
+                        <div class="form-group"><label>Allarme Scorta Cabina</label><input type="number" id="c-min-cab" value="1"></div>
+                    </div>
+                    <!-- BARCODE su prodotto -->
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label>Codice a Barre EAN (opzionale)</label>
+                        <div class="barcode-field-row">
+                            <input type="text" id="c-barcode" placeholder="Scansiona o digita il codice EAN...">
+                            <button type="button" class="btn-scan" onclick="apriScanner('anagrafica-barcode')" title="Scansiona barcode prodotto">📷 Scansiona</button>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <button type="submit" class="btn" id="btn-salva-anagrafica">Registra in Anagrafica</button>
+                        <button type="button" class="btn" style="background:var(--muted); display:none;" id="btn-annulla-edit" onclick="annullaModifica()">Annulla</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>📇 Catalogo Attuale (Modifica/Elimina)</h2>
+                <div class="search-with-scan">
+                    <input type="text" class="search-bar" id="search-anagrafica" placeholder="🔍 Cerca per nome, famiglia o barcode..." onkeyup="aggiornaTabellaAnagrafica()">
+                    <button class="btn-scan" onclick="apriScanner('anagrafica-search')" title="Cerca per barcode">📷</button>
+                </div>
+                <table>
+                    <thead><tr><th>Prodotto</th><th>Famiglia</th><th>Uso</th><th>Prezzo</th><th>Costo Medio</th><th>Barcode</th><th>Azioni</th></tr></thead>
+                    <tbody id="tabella-anagrafica"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===================== CARICO ===================== -->
+        <div id="tab-carico" class="tab-content">
+            <div class="card" style="max-width: 800px;">
+                <h2>📥 Carico Magazzino & Lotti</h2>
+                <form id="form-bolla">
+                    <div class="form-row">
+                        <div class="form-group"><label>Data Arrivo</label><input type="date" id="b-data" required></div>
+                        <div class="form-group">
+                            <label>Rif. Documento (Bolla/DDT) <span style="color:var(--muted); font-weight:400; font-size:0.8rem;">(opzionale)</span></label>
+                            <input type="text" id="b-num" placeholder="Es: DDT-2025-001">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Ricerca e Seleziona Articolo</label>
+                        <div class="search-with-scan" style="margin-bottom: 0.5rem;">
+                            <input type="text" class="search-bar" id="search-carico" placeholder="🔍 Digita nome o scansiona barcode..." onkeyup="aggiornaSelectBolla()" style="margin-bottom: 0; padding: 0.5rem; font-size: 0.9rem; border-width: 1px;">
+                            <button type="button" class="btn-scan" onclick="apriScanner('carico')" title="Scansiona barcode prodotto">📷</button>
+                        </div>
+                        <select id="b-art" required></select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group"><label>Quantità (Pz)</label><input type="number" id="b-qty" required min="1" value="1"></div>
+                        <div class="form-group"><label>Costo Unitario (€)</label><input type="number" step="0.01" id="b-costo" required></div>
+                    </div>
+                    <div class="form-row" style="background: var(--bg); padding: 1rem; border-radius: 6px;">
+                        <div class="form-group"><label>Numero Lotto</label><input type="text" id="b-lotto" placeholder="Opzionale"></div>
+                        <div class="form-group"><label>Data Scadenza</label><input type="month" id="b-scadenza"></div>
+                    </div>
+                    <button type="submit" class="btn btn-accent">Esegui Carico a Magazzino</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===================== MAGAZZINO ===================== -->
+        <div id="tab-magazzino" class="tab-content active">
+            <div class="card">
+                <h2>📦 Gestione Operativa</h2>
+                <div class="search-with-scan">
+                    <input type="text" class="search-bar" id="search-magazzino" placeholder="🔍 Cerca per nome, famiglia o scansiona barcode..." onkeyup="aggiornaTabellaInventario()">
+                    <button class="btn-scan" onclick="apriScanner('magazzino')" title="Scansiona barcode">📷</button>
+                </div>
+                <table>
+                    <thead><tr><th>Prodotto</th><th>Famiglia</th><th>Info FEFO</th><th>Magazzino</th><th>Cabina</th><th>Azioni (Scarico)</th></tr></thead>
+                    <tbody id="tabella-inventario"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===================== VALORE INVENTARIO ===================== -->
+        <div id="tab-inventario" class="tab-content">
+            <div class="grid-4">
+                <div class="stat-box accent-border">
+                    <h3>📦 Valore Totale Inventario</h3>
+                    <div class="value" id="inv-tot">€ 0.00</div>
+                    <div class="sub" id="inv-tot-pz">0 pz totali</div>
+                </div>
+                <div class="stat-box info-border">
+                    <h3>🏭 Valore Magazzino</h3>
+                    <div class="value" id="inv-mag">€ 0.00</div>
+                    <div class="sub" id="inv-mag-pz">0 pz</div>
+                </div>
+                <div class="stat-box warning-border">
+                    <h3>💅 Valore Cabina</h3>
+                    <div class="value" id="inv-cab">€ 0.00</div>
+                    <div class="sub" id="inv-cab-pz">0 pz</div>
+                </div>
+                <div class="stat-box success-border">
+                    <h3>🛍️ Potenziale Vendite</h3>
+                    <div class="value text-success" id="inv-vend">€ 0.00</div>
+                    <div class="sub">a prezzo di listino</div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>📊 Dettaglio per Prodotto (con Costo Medio)</h2>
+                <table>
+                    <thead><tr><th>Prodotto</th><th>Famiglia</th><th>Costo Medio</th><th>Prezzo Pub.</th><th>Margine/Pz</th><th>Mag.</th><th>Cabina</th><th>Val. Costo (Mag)</th><th>Val. Vendita (Mag)</th></tr></thead>
+                    <tbody id="tabella-inventario-dettaglio"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===================== VENDITE ===================== -->
+        <div id="tab-vendite" class="tab-content">
+            <div class="grid-3">
+                <div class="stat-box"><h3>Totale Incassato</h3><div class="value" id="stat-incasso">€ 0.00</div></div>
+                <div class="stat-box"><h3>Utile Netto Stimato</h3><div class="value text-success" id="stat-margine">€ 0.00</div></div>
+                <div class="stat-box"><h3>Valore Inventario a Costo</h3><div class="value" id="stat-fermo">€ 0.00</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><h2>🏆 Leaderboard</h2><table style="font-size: 0.85rem;"><thead><tr><th>Prodotto</th><th>Pz Venduti</th><th>Incasso Tot.</th></tr></thead><tbody id="tabella-classifica"></tbody></table></div>
+                <div class="card"><h2>📊 Redditività</h2><table style="font-size: 0.85rem;"><thead><tr><th>Prodotto</th><th>Costo Medio</th><th>Prezzo</th><th>Margine/Pz</th></tr></thead><tbody id="tabella-redditivita"></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- ===================== STORICO ===================== -->
+        <div id="tab-storico" class="tab-content">
+            <div class="card">
+                <h2>🕒 Log di Sistema</h2>
+                <table><thead><tr><th>Data & Ora</th><th>Azione</th><th>Prodotto</th><th>Q.tà</th><th>Dettagli / Rif.</th></tr></thead><tbody id="tabella-storico"></tbody></table>
+            </div>
+        </div>
+
+        <!-- ===================== ORDINI ===================== -->
+        <div id="tab-ordini" class="tab-content">
+            <div class="card">
+                <h2>🛒 Alert Ordini – Prodotti Sotto Scorta</h2>
+                <div class="ordini-toolbar no-print">
+                    <div>
+                        <label style="text-transform:none; font-size:0.9rem;">Filtra per categoria:</label>
+                        <select id="filtro-famiglia-ordini" onchange="aggiornaTabellaOrdini()">
+                            <option value="">Tutte le categorie</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" style="width:auto; padding:0.6rem 1.2rem;" onclick="selezionaTutti(true)">☑️ Seleziona Tutti</button>
+                    <button class="btn" style="width:auto; padding:0.6rem 1.2rem; background:var(--muted);" onclick="selezionaTutti(false)">⬜ Deseleziona</button>
+                    <button class="btn btn-accent" style="width:auto; padding:0.6rem 1.4rem;" onclick="stampaOrdini()">🖨️ Stampa Selezione</button>
+                </div>
+                <table>
+                    <thead><tr><th class="checkbox-col"><input type="checkbox" id="check-all" onchange="selezionaTutti(this.checked)" title="Seleziona tutti"></th><th>Prodotto</th><th>Famiglia</th><th>Livello Rilevato</th><th>Azione Richiesta</th></tr></thead>
+                    <tbody id="tabella-ordini"></tbody>
+                </table>
+                <p id="ordini-vuoti" style="text-align:center; color:var(--success); padding:2rem; display:none;">✅ Tutto in ordine! Nessun prodotto sotto scorta.</p>
+            </div>
+        </div>
+
+        <!-- ===================== IMPOSTAZIONI ===================== -->
+        <div id="tab-impostazioni" class="tab-content">
+            <div class="card" style="max-width: 600px;">
+                <h2>⚙️ Gestione Dati</h2>
+                <div style="margin-bottom: 1.5rem;"><button class="btn btn-accent" onclick="esportaDati()">💾 Scarica Backup (.json)</button></div>
+                <div style="margin-bottom: 1.5rem;"><input type="file" id="file-import" accept=".json" style="margin-bottom: 1rem;"><button class="btn" onclick="importaDati()" style="background: var(--info);">🔄 Ripristina da File</button></div>
+                <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px dashed var(--danger);"><button class="btn btn-danger" onclick="resetDatabase()">🗑️ Cancella Tutto il Database</button></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- AREA STAMPA (visibile solo in print) -->
+    <div id="print-area">
+        <h1>🛒 Lista Ordini – Beauty.OS</h1>
+        <div class="print-meta" id="print-meta"></div>
+        <div id="print-content"></div>
+    </div>
+
+    <!-- SCANNER MODAL -->
+    <div id="scanner-modal">
+        <div class="scanner-overlay">
+            <video id="scanner-video" autoplay playsinline muted></video>
+            <div class="scanner-line"></div>
+        </div>
+        <div id="scanner-status">📷 Punta la fotocamera verso il codice a barre...</div>
+        <button id="btn-chiudi-scanner" onclick="chiudiScanner()">✕ Chiudi</button>
+    </div>
+    <div id="scanner-result-toast">✅ Codice rilevato!</div>
+
+    <script>
+        // ================================================================
+        // DATI
+        // ================================================================
+        let catalogo = [];
+        let storico = [];
+
+        function salvaDati() {
+            localStorage.setItem('beautyOS_catalogo', JSON.stringify(catalogo));
+            localStorage.setItem('beautyOS_storico', JSON.stringify(storico));
+        }
+
+        function caricaDatiIniziali() {
+            const catSalvato = localStorage.getItem('beautyOS_catalogo');
+            const stoSalvato = localStorage.getItem('beautyOS_storico');
+            if (catSalvato && stoSalvato) { catalogo = JSON.parse(catSalvato); storico = JSON.parse(stoSalvato); }
+            else { salvaDati(); }
+        }
+
+        function getFamiglie() {
+            return [...new Set(catalogo.map(a => a.famiglia).filter(Boolean))].sort();
+        }
+
+        // ================================================================
+        // EXPORT / IMPORT
+        // ================================================================
+        function esportaDati() {
+            const backup = { catalogo, storico, dataEsportazione: new Date().toISOString() };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `BeautyOS_Backup_${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}.json`);
+            document.body.appendChild(dl); dl.click(); dl.remove();
+        }
+        function importaDati() {
+            const input = document.getElementById('file-import');
+            if (!input.files || input.files.length === 0) return alert("Seleziona file JSON.");
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const dati = JSON.parse(e.target.result);
+                    if (dati.catalogo && dati.storico) { catalogo = dati.catalogo; storico = dati.storico; salvaDati(); aggiornaUI(); alert("✅ Backup ripristinato!"); }
+                } catch(err) { alert("❌ Errore file."); }
+            }; reader.readAsText(input.files[0]);
+        }
+        function resetDatabase() { if(confirm("Vuoi cancellare TUTTO? Irreversibile.")) { if(confirm("Sicura?")) { localStorage.clear(); location.reload(); } } }
+
+        // ================================================================
+        // CORE UI
+        // ================================================================
+        document.getElementById('b-data').valueAsDate = new Date();
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            if(btn) btn.classList.add('active');
+            aggiornaUI();
+        }
+
+        function formattaData() {
+            const now = new Date(); return `${now.toLocaleDateString('it-IT')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        }
+        function logEvento(tipo, nome, qty, ref) { storico.unshift({ data: formattaData(), tipo, nome, qty, ref }); salvaDati(); }
+
+        function aggiornaUI() {
+            aggiornaTabellaAnagrafica();
+            aggiornaSelectBolla();
+            aggiornaTabellaInventario();
+            aggiornaTabellaOrdini();
+            aggiornaStorico();
+            aggiornaStatisticheVendite();
+            aggiornaInventarioValori();
+            aggiornaDatalist();
+        }
+
+        function aggiornaDatalist() {
+            const dl = document.getElementById('famiglie-list');
+            dl.innerHTML = getFamiglie().map(f => `<option value="${f}">`).join('');
+        }
+
+        // ================================================================
+        // ANAGRAFICA
+        // ================================================================
+        function aggiornaTabellaAnagrafica() {
+            const tbody = document.getElementById('tabella-anagrafica');
+            const filtro = document.getElementById('search-anagrafica').value.toLowerCase();
+            tbody.innerHTML = '';
+            catalogo
+                .filter(a => a.nome.toLowerCase().includes(filtro) || 
+                             (a.famiglia && a.famiglia.toLowerCase().includes(filtro)) || 
+                             (a.barcode && a.barcode.includes(filtro)))
+                .sort((a,b) => a.nome.localeCompare(b.nome))
+                .forEach(a => {
+                    const famigliaTag = a.famiglia ? `<span class="famiglia-tag">${a.famiglia}</span>` : '<span style="color:var(--muted); font-size:0.8rem;">—</span>';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${a.nome}</strong></td>
+                            <td>${famigliaTag}</td>
+                            <td style="text-transform: capitalize; font-size:0.85rem;">${a.uso}</td>
+                            <td>€ ${a.prezzo.toFixed(2)}</td>
+                            <td style="color:var(--muted);">€ ${a.costoMedio.toFixed(2)}</td>
+                            <td style="font-size:0.8rem; color:var(--muted);">${a.barcode || '—'}</td>
+                            <td>
+                                <button class="btn-sm" onclick="preparaModifica(${a.id})">✏️ Modifica</button>
+                                <button class="btn-sm btn-sm-danger" onclick="eliminaArticolo(${a.id})">🗑️ Elimina</button>
+                            </td>
+                        </tr>`;
+                });
+        }
+
+        function preparaModifica(id) {
+            let art = catalogo.find(a => a.id === id);
+            if(!art) return;
+            document.getElementById('edit-id').value = art.id;
+            document.getElementById('c-nome').value = art.nome;
+            document.getElementById('c-famiglia').value = art.famiglia || '';
+            document.getElementById('c-uso').value = art.uso;
+            document.getElementById('c-prezzo').value = art.prezzo;
+            document.getElementById('c-min-mag').value = art.minMagazzino;
+            document.getElementById('c-min-cab').value = art.minCabina;
+            document.getElementById('c-barcode').value = art.barcode || '';
+            document.getElementById('titolo-form-anagrafica').innerHTML = "✏️ Modifica Articolo Esistente";
+            document.getElementById('btn-salva-anagrafica').innerHTML = "🔄 Aggiorna Dati";
+            document.getElementById('btn-salva-anagrafica').classList.add('btn-edit');
+            document.getElementById('btn-annulla-edit').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function annullaModifica() {
+            document.getElementById('form-crea').reset();
+            document.getElementById('edit-id').value = "";
+            document.getElementById('titolo-form-anagrafica').innerHTML = "✨ Creazione Nuovo Articolo";
+            document.getElementById('btn-salva-anagrafica').innerHTML = "Registra in Anagrafica";
+            document.getElementById('btn-salva-anagrafica').classList.remove('btn-edit');
+            document.getElementById('btn-annulla-edit').style.display = 'none';
+        }
+
+        function eliminaArticolo(id) {
+            let art = catalogo.find(a => a.id === id);
+            if(art.qMagazzino > 0 || art.qCabina > 0) {
+                alert(`⛔ Impossibile eliminare "${art.nome}".\n\nHai ancora ${art.qMagazzino} pz in Magazzino e ${art.qCabina} pz in Cabina.\nAzzerare le quantità prima di eliminare.`);
+                return;
+            }
+            if(confirm(`Eliminare definitivamente "${art.nome}" dall'anagrafica?`)) {
+                catalogo = catalogo.filter(a => a.id !== id);
+                salvaDati(); aggiornaUI();
+            }
+        }
+
+        document.getElementById('form-crea').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let idEsistente = document.getElementById('edit-id').value;
+            const nome = document.getElementById('c-nome').value;
+            const famiglia = document.getElementById('c-famiglia').value.trim();
+            const uso = document.getElementById('c-uso').value;
+            const prezzo = parseFloat(document.getElementById('c-prezzo').value) || 0;
+            const minMag = parseInt(document.getElementById('c-min-mag').value);
+            const minCab = parseInt(document.getElementById('c-min-cab').value);
+            const barcode = document.getElementById('c-barcode').value.trim();
+
+            if (idEsistente) {
+                let art = catalogo.find(a => a.id == idEsistente);
+                art.nome = nome; art.famiglia = famiglia; art.uso = uso; art.prezzo = prezzo;
+                art.minMagazzino = minMag; art.minCabina = minCab; art.barcode = barcode;
+                alert("✅ Articolo aggiornato con successo!");
+            } else {
+                // Controllo barcode duplicato
+                if (barcode && catalogo.find(a => a.barcode === barcode)) {
+                    alert(`⚠️ Attenzione: il barcode "${barcode}" è già associato a un altro prodotto!`);
+                    return;
+                }
+                catalogo.push({
+                    id: Date.now(), nome, famiglia, uso, barcode,
+                    costoMedio: 0, prezzo, qMagazzino: 0, qCabina: 0,
+                    minMagazzino: minMag, minCabina: minCab,
+                    venduti: 0, lottoScadenza: "", scadenzaMese: ""
+                });
+                alert("✅ Prodotto salvato nell'anagrafica!");
+            }
+            salvaDati(); annullaModifica(); aggiornaUI();
+        });
+
+        // ================================================================
+        // CARICO BOLLA
+        // ================================================================
+        function aggiornaSelectBolla() {
+            const select = document.getElementById('b-art');
+            const filtro = document.getElementById('search-carico').value.toLowerCase();
+            select.innerHTML = '<option value="" disabled selected>-- Seleziona Prodotto --</option>';
+            catalogo
+                .filter(a => a.nome.toLowerCase().includes(filtro) || (a.barcode && a.barcode.includes(filtro)))
+                .sort((a,b) => a.nome.localeCompare(b.nome))
+                .forEach(a => {
+                    select.innerHTML += `<option value="${a.id}">${a.nome}${a.famiglia ? ' ['+a.famiglia+']' : ''}</option>`;
+                });
+        }
+
+        document.getElementById('form-bolla').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const numBolla = document.getElementById('b-num').value.trim();
+
+            // Avviso bolla mancante senza bloccare
+            if (!numBolla) {
+                const ok = confirm("⚠️ ATTENZIONE: Non hai inserito il numero di bolla/DDT.\n\nVuoi comunque registrare il carico senza riferimento documento?");
+                if (!ok) return;
+            }
+
+            let id = parseInt(document.getElementById('b-art').value);
+            let qty = parseInt(document.getElementById('b-qty').value);
+            let costo = parseFloat(document.getElementById('b-costo').value);
+            let lotto = document.getElementById('b-lotto').value;
+            let scad = document.getElementById('b-scadenza').value;
+            let art = catalogo.find(a => a.id === id);
+
+            if (art) {
+                let totalePz = art.qMagazzino + art.qCabina;
+                art.costoMedio = totalePz > 0 
+                    ? ((totalePz * art.costoMedio) + (qty * costo)) / (totalePz + qty) 
+                    : costo;
+                art.qMagazzino += qty;
+                if (lotto || scad) { art.lottoScadenza = lotto || scad; art.scadenzaMese = scad; }
+                logEvento('Carico', art.nome, qty, `Bolla: ${numBolla || 'N/D'}`);
+                salvaDati(); this.reset();
+                document.getElementById('b-data').valueAsDate = new Date();
+                document.getElementById('search-carico').value = '';
+                aggiornaUI();
+                alert(`✅ Carico registrato. Costo medio aggiornato: € ${art.costoMedio.toFixed(2)}`);
+            }
+        });
+
+        // ================================================================
+        // MAGAZZINO OPERATIVO
+        // ================================================================
+        function aggiornaTabellaInventario() {
+            const tbody = document.getElementById('tabella-inventario');
+            const filtro = document.getElementById('search-magazzino').value.toLowerCase();
+            tbody.innerHTML = '';
+            const oggi = new Date();
+            const meseCorrente = oggi.getFullYear() + '-' + String(oggi.getMonth() + 1).padStart(2, '0');
+
+            catalogo
+                .filter(a => a.nome.toLowerCase().includes(filtro) || 
+                             (a.famiglia && a.famiglia.toLowerCase().includes(filtro)) ||
+                             (a.lottoScadenza && a.lottoScadenza.toLowerCase().includes(filtro)) ||
+                             (a.barcode && a.barcode.includes(filtro)))
+                .sort((a,b) => a.nome.localeCompare(b.nome))
+                .forEach(a => {
+                    let btnSposta = a.qMagazzino > 0 && a.uso !== 'vendita' ? `<button class="btn-sm" onclick="eseguiAzioneConConferma(${a.id}, 'sposta')">➡️ Cabina</button>` : '';
+                    let btnUsa = a.qCabina > 0 && a.uso !== 'vendita' ? `<button class="btn-sm" onclick="eseguiAzioneConConferma(${a.id}, 'usa')">🧴 Usa</button>` : '';
+                    let btnVendi = a.qMagazzino > 0 && a.uso !== 'uso' ? `<button class="btn-sm" onclick="eseguiAzioneConConferma(${a.id}, 'vendi')">🛍️ Vendi</button>` : '';
+                    let fefoHTML = '';
+                    if(a.lottoScadenza) {
+                        let text = `Lotto: ${a.lottoScadenza}`;
+                        let classeUrgenza = (a.scadenzaMese && a.scadenzaMese <= meseCorrente) ? 'fefo-urgent' : '';
+                        if(classeUrgenza) text = `⚠️ SCADUTO/VICINO: ${a.scadenzaMese}`;
+                        fefoHTML = `<span class="fefo-alert ${classeUrgenza}">${text}</span>`;
+                    }
+                    const famigliaTag = a.famiglia ? `<span class="famiglia-tag">${a.famiglia}</span>` : '—';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${a.nome}</strong></td>
+                            <td>${famigliaTag}</td>
+                            <td>${fefoHTML || '-'}</td>
+                            <td style="font-size:1.1rem; color:${a.qMagazzino < a.minMagazzino ? 'var(--danger)' : 'inherit'}"><strong>${a.qMagazzino}</strong></td>
+                            <td style="font-size:1.1rem; color:${a.qCabina < a.minCabina ? 'var(--danger)' : 'inherit'}"><strong>${a.qCabina}</strong></td>
+                            <td>${btnSposta}${btnUsa}${btnVendi}</td>
+                        </tr>`;
+                });
+        }
+
+        function eseguiAzioneConConferma(id, azione) {
+            let art = catalogo.find(a => a.id === id);
+            if(!art) return;
+            let extraMsg = art.lottoScadenza ? `\n(💡 FEFO: Prendi lotto ${art.lottoScadenza})` : '';
+            let msg = azione === 'sposta' ? `Spostare 1 pz di "${art.nome}" in Cabina?${extraMsg}` 
+                    : azione === 'usa' ? `Scaricare 1 pz di "${art.nome}" usato in Cabina?` 
+                    : `Confermi VENDITA di "${art.nome}" a €${art.prezzo}?${extraMsg}`;
+            if(window.confirm(msg)) {
+                if(azione === 'sposta' && art.qMagazzino > 0) { art.qMagazzino--; art.qCabina++; logEvento('Spostamento', art.nome, 1, 'In Cabina'); }
+                if(azione === 'usa' && art.qCabina > 0) { art.qCabina--; logEvento('Uso Cabina', art.nome, 1, 'Consumo'); }
+                if(azione === 'vendi' && art.qMagazzino > 0) { art.qMagazzino--; art.venduti++; logEvento('Vendita', art.nome, 1, `Incasso: €${art.prezzo}`); }
+                salvaDati(); aggiornaUI();
+            }
+        }
+
+        // ================================================================
+        // VALORE INVENTARIO
+        // ================================================================
+        function aggiornaInventarioValori() {
+            let valMag = 0, valCab = 0, potVend = 0, pzMag = 0, pzCab = 0;
+            const tbody = document.getElementById('tabella-inventario-dettaglio');
+            tbody.innerHTML = '';
+
+            catalogo.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(a => {
+                valMag += a.qMagazzino * a.costoMedio;
+                valCab += a.qCabina * a.costoMedio;
+                pzMag += a.qMagazzino;
+                pzCab += a.qCabina;
+                if (a.uso !== 'uso') potVend += a.qMagazzino * a.prezzo;
+
+                const margine = a.prezzo - a.costoMedio;
+                const valCostoMag = a.qMagazzino * a.costoMedio;
+                const valVenditaMag = a.qMagazzino * a.prezzo;
+                const famigliaTag = a.famiglia ? `<span class="famiglia-tag">${a.famiglia}</span>` : '—';
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${a.nome}</strong></td>
+                        <td>${famigliaTag}</td>
+                        <td style="color:var(--info)">€ ${a.costoMedio.toFixed(2)}</td>
+                        <td>€ ${a.prezzo.toFixed(2)}</td>
+                        <td class="${margine > 0 ? 'text-success' : ''}" style="font-weight:700">€ ${margine.toFixed(2)}</td>
+                        <td>${a.qMagazzino}</td>
+                        <td>${a.qCabina}</td>
+                        <td style="color:var(--info)">€ ${valCostoMag.toFixed(2)}</td>
+                        <td class="text-success">€ ${valVenditaMag.toFixed(2)}</td>
+                    </tr>`;
+            });
+
+            const valTot = valMag + valCab;
+            document.getElementById('inv-tot').textContent = `€ ${valTot.toFixed(2)}`;
+            document.getElementById('inv-tot-pz').textContent = `${pzMag + pzCab} pz totali`;
+            document.getElementById('inv-mag').textContent = `€ ${valMag.toFixed(2)}`;
+            document.getElementById('inv-mag-pz').textContent = `${pzMag} pz`;
+            document.getElementById('inv-cab').textContent = `€ ${valCab.toFixed(2)}`;
+            document.getElementById('inv-cab-pz').textContent = `${pzCab} pz`;
+            document.getElementById('inv-vend').textContent = `€ ${potVend.toFixed(2)}`;
+        }
+
+        // ================================================================
+        // STATISTICHE VENDITE
+        // ================================================================
+        function aggiornaStatisticheVendite() {
+            let incassoTot = 0, costoTotVenduto = 0, valoreFermo = 0;
+            const tbodyRed = document.getElementById('tabella-redditivita'); tbodyRed.innerHTML = '';
+            catalogo.forEach(a => {
+                incassoTot += a.venduti * a.prezzo;
+                costoTotVenduto += a.venduti * a.costoMedio;
+                valoreFermo += (a.qMagazzino + a.qCabina) * a.costoMedio;
+                if(a.uso !== 'uso') tbodyRed.innerHTML += `<tr><td><strong>${a.nome}</strong></td><td>€ ${a.costoMedio.toFixed(2)}</td><td>€ ${a.prezzo.toFixed(2)}</td><td class="text-success"><strong>€ ${(a.prezzo - a.costoMedio).toFixed(2)}</strong></td></tr>`;
+            });
+            document.getElementById('stat-incasso').innerText = `€ ${incassoTot.toFixed(2)}`;
+            document.getElementById('stat-margine').innerText = `€ ${(incassoTot - costoTotVenduto).toFixed(2)}`;
+            document.getElementById('stat-fermo').innerText = `€ ${valoreFermo.toFixed(2)}`;
+            const lbTbody = document.getElementById('tabella-classifica'); lbTbody.innerHTML = '';
+            catalogo.filter(a => a.venduti > 0).sort((a, b) => b.venduti - a.venduti).forEach((a, i) => {
+                lbTbody.innerHTML += `<tr><td><strong>${i+1}° ${a.nome}</strong></td><td>${a.venduti} pz</td><td>€ ${(a.venduti * a.prezzo).toFixed(2)}</td></tr>`;
+            });
+        }
+
+        // ================================================================
+        // STORICO
+        // ================================================================
+        function aggiornaStorico() {
+            const tbody = document.getElementById('tabella-storico'); tbody.innerHTML = '';
+            storico.forEach(s => {
+                let badge = s.tipo === 'Carico' ? 'bg-carico' : (s.tipo === 'Spostamento' ? 'bg-sposta' : (s.tipo === 'Uso Cabina' ? 'bg-usa' : 'bg-vendi'));
+                tbody.innerHTML += `<tr><td style="color:var(--muted); font-size:0.8rem;">${s.data}</td><td><span class="badge ${badge}">${s.tipo.toUpperCase()}</span></td><td><strong>${s.nome}</strong></td><td>${s.qty} pz</td><td style="color:var(--muted); font-size:0.85rem;">${s.ref}</td></tr>`;
+            });
+        }
+
+        // ================================================================
+        // ORDINI – con filtro categoria + checkbox + stampa
+        // ================================================================
+        function aggiornaTabellaOrdini() {
+            const tbody = document.getElementById('tabella-ordini');
+            const filtroFam = document.getElementById('filtro-famiglia-ordini').value;
+            tbody.innerHTML = '';
+
+            // Aggiorna filtro famiglie
+            const sel = document.getElementById('filtro-famiglia-ordini');
+            const valoreCorrente = sel.value;
+            sel.innerHTML = '<option value="">Tutte le categorie</option>';
+            getFamiglie().forEach(f => sel.innerHTML += `<option value="${f}" ${f === valoreCorrente ? 'selected' : ''}>${f}</option>`);
+
+            let count = 0;
+            catalogo.forEach(a => {
+                const sottoScortaMag = a.qMagazzino < a.minMagazzino;
+                const sottoScortaCab = a.qCabina < a.minCabina && a.uso !== 'vendita';
+                if (!sottoScortaMag && !sottoScortaCab) return;
+                if (filtroFam && a.famiglia !== filtroFam) return;
+                count++;
+
+                let livelloHTML = '';
+                if (sottoScortaMag) livelloHTML += `<span style="color:var(--danger)">Mag: ${a.qMagazzino}/${a.minMagazzino}</span> `;
+                if (sottoScortaCab) livelloHTML += `<span style="color:var(--danger)">Cab: ${a.qCabina}/${a.minCabina}</span>`;
+                const azione = sottoScortaMag ? "Ordine Fornitore" : "Sposta in Cabina";
+                const famigliaTag = a.famiglia ? `<span class="famiglia-tag">${a.famiglia}</span>` : '—';
+                tbody.innerHTML += `
+                    <tr data-id="${a.id}">
+                        <td class="checkbox-col"><input type="checkbox" class="ordine-check" checked></td>
+                        <td><strong>${a.nome}</strong></td>
+                        <td>${famigliaTag}</td>
+                        <td>${livelloHTML}</td>
+                        <td><strong>${azione}</strong></td>
+                    </tr>`;
+            });
+
+            document.getElementById('ordini-vuoti').style.display = count === 0 ? 'block' : 'none';
+            document.getElementById('check-all').checked = count > 0;
+        }
+
+        function selezionaTutti(val) {
+            document.querySelectorAll('.ordine-check').forEach(cb => cb.checked = val);
+            document.getElementById('check-all').checked = val;
+        }
+
+        function stampaOrdini() {
+            const righeSelezionate = [...document.querySelectorAll('#tabella-ordini tr')].filter(tr => {
+                const cb = tr.querySelector('.ordine-check');
+                return cb && cb.checked;
+            });
+
+            if (righeSelezionate.length === 0) {
+                alert('⚠️ Nessun prodotto selezionato. Seleziona almeno un prodotto da ordinare.');
+                return;
+            }
+
+            // Raggruppa per famiglia
+            const gruppi = {};
+            righeSelezionate.forEach(tr => {
+                const id = parseInt(tr.dataset.id);
+                const art = catalogo.find(a => a.id === id);
+                if (!art) return;
+                const fam = art.famiglia || 'Senza Categoria';
+                if (!gruppi[fam]) gruppi[fam] = [];
+                gruppi[fam].push(art);
+            });
+
+            // Costruisci HTML stampa
+            let html = '';
+            Object.keys(gruppi).sort().forEach(fam => {
+                html += `<div class="print-categoria">📂 ${fam}</div>`;
+                html += `<table><thead><tr><th>Prodotto</th><th>Barcode</th><th>Mag. Attuale</th><th>Min. Richiesto</th><th>Cabina Attuale</th><th>Min. Cabina</th><th>Note / Quantità</th></tr></thead><tbody>`;
+                gruppi[fam].forEach(a => {
+                    html += `<tr>
+                        <td><strong>${a.nome}</strong></td>
+                        <td style="font-size:0.8rem; color:#666;">${a.barcode || '—'}</td>
+                        <td style="color:${a.qMagazzino < a.minMagazzino ? '#e74c3c' : '#27ae60'}; font-weight:700">${a.qMagazzino}</td>
+                        <td>${a.minMagazzino}</td>
+                        <td style="color:${a.qCabina < a.minCabina ? '#e74c3c' : '#27ae60'}; font-weight:700">${a.qCabina}</td>
+                        <td>${a.minCabina}</td>
+                        <td style="width:140px;"></td>
+                    </tr>`;
+                });
+                html += `</tbody></table>`;
+            });
+
+            document.getElementById('print-content').innerHTML = html;
+            document.getElementById('print-meta').textContent = `Stampato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'})} — ${righeSelezionate.length} prodotti selezionati`;
+            window.print();
+        }
+
+        // ================================================================
+        // BARCODE SCANNER
+        // ================================================================
+        let scannerStream = null;
+        let scannerInterval = null;
+        let scannerTarget = null;
+
+        async function apriScanner(target) {
+            if (!('BarcodeDetector' in window)) {
+                alert('⚠️ Il tuo browser non supporta il Barcode Scanner nativo.\nUsa Chrome su Android aggiornato.');
+                return;
+            }
+            scannerTarget = target;
+            document.getElementById('scanner-modal').classList.add('open');
+            document.getElementById('scanner-status').textContent = '📷 Punta la fotocamera verso il codice a barre...';
+
+            try {
+                scannerStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                const video = document.getElementById('scanner-video');
+                video.srcObject = scannerStream;
+                await video.play();
+
+                const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code', 'upc_a', 'upc_e', 'itf', 'codabar'] });
+
+                scannerInterval = setInterval(async () => {
+                    try {
+                        const barcodes = await detector.detect(video);
+                        if (barcodes.length > 0) {
+                            applicaCodice(barcodes[0].rawValue);
+                        }
+                    } catch(e) {}
+                }, 300);
+
+            } catch(err) {
+                document.getElementById('scanner-status').textContent = '❌ Permesso fotocamera negato: ' + err.message;
+            }
+        }
+
+        function applicaCodice(codice) {
+            chiudiScanner();
+
+            if (scannerTarget === 'anagrafica-barcode') {
+                // Popola campo barcode nel form di creazione
+                document.getElementById('c-barcode').value = codice;
+
+            } else if (scannerTarget === 'anagrafica-search') {
+                // Cerca per barcode nella tabella anagrafica
+                document.getElementById('search-anagrafica').value = codice;
+                aggiornaTabellaAnagrafica();
+
+            } else if (scannerTarget === 'magazzino') {
+                // Cerca per barcode nel magazzino – trova prodotto esatto
+                const art = catalogo.find(a => a.barcode === codice);
+                if (art) {
+                    document.getElementById('search-magazzino').value = art.nome;
+                } else {
+                    document.getElementById('search-magazzino').value = codice;
+                    alert(`⚠️ Nessun prodotto trovato con barcode: ${codice}\n\nPuoi registrare il barcode nella scheda Anagrafica.`);
+                }
+                aggiornaTabellaInventario();
+
+            } else if (scannerTarget === 'carico') {
+                // Seleziona automaticamente il prodotto nel carico
+                const art = catalogo.find(a => a.barcode === codice);
+                if (art) {
+                    document.getElementById('search-carico').value = art.nome;
+                    aggiornaSelectBolla();
+                    setTimeout(() => {
+                        const select = document.getElementById('b-art');
+                        // Trova e seleziona l'option corrispondente
+                        for (let i = 0; i < select.options.length; i++) {
+                            if (parseInt(select.options[i].value) === art.id) {
+                                select.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }, 150);
+                } else {
+                    document.getElementById('search-carico').value = codice;
+                    aggiornaSelectBolla();
+                    alert(`⚠️ Nessun prodotto trovato con barcode: ${codice}\n\nRegistra prima il prodotto in Anagrafica con questo barcode.`);
+                }
+            }
+
+            // Toast
+            const toast = document.getElementById('scanner-result-toast');
+            const art = catalogo.find(a => a.barcode === codice);
+            toast.textContent = art ? `✅ ${art.nome}` : `📷 Codice: ${codice}`;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        function chiudiScanner() {
+            document.getElementById('scanner-modal').classList.remove('open');
+            if (scannerInterval) { clearInterval(scannerInterval); scannerInterval = null; }
+            if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+        }
+
+        // ================================================================
+        // AVVIO
+        // ================================================================
+        caricaDatiIniziali();
+        aggiornaUI();
+    </script>
+</body>
+</html>
